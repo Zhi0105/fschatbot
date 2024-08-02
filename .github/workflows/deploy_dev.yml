@@ -1,0 +1,41 @@
+name: Upload to S3 (Production)
+
+on:
+  push:
+    branches:
+      - production
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          ref: "development"
+
+      - name: Create release directory and copy deeplink file
+        id: copy-to-release-dir
+        run: |
+          cd ../
+          mkdir release/
+          cp $GITHUB_WORKSPACE/fschat.js release/fschat.js
+
+      - uses: shallwefootball/s3-upload-action@master
+        id: upload-to-s3
+        name: Upload to S3 Bucket
+        with:
+          aws_key_id: ${{ secrets.AWS_KEY_ID }}
+          aws_secret_access_key: ${{ secrets.AWS_SECRET_ACCESS_KEY}}
+          aws_bucket: ${{ secrets.AWS_BUCKET_DEV }}
+          source_dir: "../release"
+          destination_dir: "frontend/js"
+
+      - uses: act10ns/slack@v2.1.0
+        with:
+          status: ${{ job.status }}
+          steps: ${{ toJson(steps) }}
+        if: always()
