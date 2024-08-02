@@ -1,9 +1,9 @@
-name: Upload to S3 (Production)
+name: Upload to S3 (Development)
 
 on:
   push:
     branches:
-      - production
+      - development
 
 jobs:
   upload:
